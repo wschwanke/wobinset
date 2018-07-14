@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+// Setup the ENV variables for local development. Remove this is production.
+const dotenv = require('dotenv').config({ path: 'server/env/.env' });
+
+if (dotenv.error) {
+  throw dotenv.error;
+}
+
+const fs = require('fs');
+const cluster = require('cluster');
+const logger = require('../lib/logger/index.js');
+const http = require('http');
+const app = require('../server.js');
+// Count the machine's CPUs
+const cpuCount = require('os').cpus().length;
+
+let server;
+
+logger.info('Checking for /logs folder...');
+if (!fs.existsSync('./logs')) {
+  logger.info('Logs folder not found. Create logs folder in root directory.');
+  fs.mkdirSync('./logs');
+}
+
+/**
+ * On Error event listener for the server.
+ * @param error - The error that is passed into the event.
+ */
+const onError = (error) => {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  const bind = typeof port === 'string' ? `Pipe: ${port}` : `Port: ${port}`;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      logger.error(`${bind} requires elevated privileges.`);
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      logger.error(`${bind} is already in use.`);
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+};
+
+/**
+ * On Listen even listener. Tells the server what to do once it has been initialized.
+ */
+const onListening = () => {
+  const addr = server.address();
+  const bind = typeof addr === 'string' ? `pipe: ${addr}` : `port: ${addr.port}`;
+  logger.info(`Listening on ${bind}`);
+};
+
+if (cluster.isMaster) {
+  // Create a worker for each CPU
+  for (let i = 0; i < cpuCount; i += 1) {
+    cluster.fork();
+  }
+} else {
+  // Set the port to the ENV variable or use 3000 as default
+  const port = process.env.PORT || 3000;
+  app.set('port', port);
+
+  // create the actual server using our app
+  server = http.createServer(app);
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+}
+
+// Listen for dying workers
+cluster.on('exit', (worker) => {
+  // Replace the dead worker
+  logger.info('Worker %d has died.', worker.id);
+  cluster.fork();
+});

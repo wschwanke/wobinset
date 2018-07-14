@@ -6,11 +6,10 @@ const merge = require('webpack-merge');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+// const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { AngularCompilerPlugin } = require('@ngtools/webpack')
 
 const config = require('./config');
-
 
 let webpackConfig = {
   context: config.paths.root,
@@ -126,24 +125,29 @@ let webpackConfig = {
   target: 'web',
 
   plugins: [
-    new HardSourceWebpackPlugin(),
     new CleanWebpackPlugin([config.paths.dist], {
       root: config.paths.root,
       verbose: false,
     }),
-    new CopyWebpackPlugin(
-      [
-        {
-          context: join(config.paths.assets, 'images'),
-          from: '**/*',
-          to: join(config.paths.root, 'server/public/dist/images'),
-          flatten: true,
-        },
-      ],
-      {
-        copyUnmodified: true,
-      },
-    ),
+    new AngularCompilerPlugin({
+      tsConfigPath: 'path/to/tsconfig.json',
+      entryModule: 'path/to/app.module#AppModule',
+      sourceMap: true
+    }),
+    // Copy images from the assets folder to dist folder.
+    // new CopyWebpackPlugin(
+    //   [
+    //     {
+    //       context: join(config.paths.assets, 'images'),
+    //       from: '**/*',
+    //       to: join(config.paths.root, 'server/public/dist/images'),
+    //       flatten: true,
+    //     },
+    //   ],
+    //   {
+    //     copyUnmodified: true,
+    //   },
+    // ),
     new MiniCssExtractPlugin({
       filename: config.enabled.watcher ? 'styles/[name].css' : 'styles/[name].[hash].css',
       chunkFilename: config.enabled.watcher ? 'styles/[id].css' : 'styles/[id].[hash].css',
@@ -159,7 +163,7 @@ if (config.env.production) {
 }
 
 if (config.enabled.watcher) {
-  webpackConfig = merge(webpackConfig, require('./webpack.watcher.config.js'));
+  webpackConfig = merge(webpackConfig, require('./watch.config.js'));
 }
 
 module.exports = webpackConfig;

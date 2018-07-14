@@ -12,7 +12,7 @@ const config = {
     root: rootPath,
     assets: path.join(rootPath, 'app/assets'),
     public: '/dist/',
-    dist: path.join(rootPath, 'server/public/dist')
+    dist: path.join(rootPath, 'public/dist')
   },
   enabled: {
     watcher: isWatching,
