@@ -1,13 +1,13 @@
 // For instructions about this file refer to
 // webpack and webpack-hot-middleware documentation
 const webpack = require('webpack');
-const { resolve } = require('path');
+const { join } = require('path');
 const merge = require('webpack-merge');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const CopyWebpackPlugin = require('copy-webpack-plugin');
-const { AngularCompilerPlugin } = require('@ngtools/webpack')
+const { AngularCompilerPlugin } = require('@ngtools/webpack');
 
 const config = require('./config');
 
@@ -18,8 +18,8 @@ let webpackConfig = {
 
   entry: {
     bundle: [
-      join(config.paths.root, 'app/index.jsx'),
-      join(config.paths.root, 'app/assets/styles/main.scss'),
+      join(config.paths.root, 'app/main.ts'),
+      join(config.paths.root, 'app/polyfills.ts'),
     ],
   },
 
@@ -28,7 +28,7 @@ let webpackConfig = {
   mode: config.env.production ? 'production' : 'development',
 
   performance: {
-    hints: true,
+    hints: 'warning',
   },
 
   output: {
@@ -41,9 +41,12 @@ let webpackConfig = {
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
-        exclude: [/bower_components/, /node_modules/],
-        loader: ['babel-loader'],
+        test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+        loader: '@ngtools/webpack'
+      },
+      {
+        "test": /\.html$/,
+        "loader": "raw-loader"
       },
       {
         test: /\.css?$/,
@@ -89,38 +92,33 @@ let webpackConfig = {
 
   resolve: {
     alias: {
-      blocks: join(config.paths.root, 'app/blocks'),
-      components: join(config.paths.root, 'app/components'),
-      services: join(config.paths.root, 'app/services'),
-      scenes: join(config.paths.root, 'app/scenes'),
-      router: join(config.paths.root, 'app/router'),
-      state: join(config.paths.root, 'app/state'),
+      assets: join(config.paths.root, 'app/assets'),
     },
-    extensions: ['.js', '.jsx', '.css', '.scss'],
+    extensions: ['.js', '.ts', '.css', '.scss', 'html'],
   },
 
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-      minSize: 30000,
-      minChunks: 1,
-      maxAsyncRequests: 5,
-      maxInitialRequests: 3,
-      automaticNameDelimiter: '-',
-      name: true,
-      cacheGroups: {
-        commons: {
-          chunks: 'initial',
-          reuseExistingChunk: true,
-        },
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          priority: 10,
-          enforce: true,
-        },
-      },
-    },
-  },
+  // optimization: {
+  //   splitChunks: {
+  //     chunks: 'all',
+  //     minSize: 30000,
+  //     minChunks: 1,
+  //     maxAsyncRequests: 5,
+  //     maxInitialRequests: 3,
+  //     automaticNameDelimiter: '-',
+  //     name: true,
+  //     cacheGroups: {
+  //       commons: {
+  //         chunks: 'initial',
+  //         reuseExistingChunk: true,
+  //       },
+  //       vendor: {
+  //         test: /[\\/]node_modules[\\/]/,
+  //         priority: 10,
+  //         enforce: true,
+  //       },
+  //     },
+  //   },
+  // },
 
   target: 'web',
 
@@ -130,9 +128,10 @@ let webpackConfig = {
       verbose: false,
     }),
     new AngularCompilerPlugin({
-      tsConfigPath: 'path/to/tsconfig.json',
-      entryModule: 'path/to/app.module#AppModule',
-      sourceMap: true
+      tsConfigPath: join(config.paths.root, 'app'),
+      entryModule: join(config.paths.root, 'app/app/app.module#AppModule'),
+      sourceMap: true,
+      skipCodeGeneration: true,
     }),
     // Copy images from the assets folder to dist folder.
     // new CopyWebpackPlugin(
