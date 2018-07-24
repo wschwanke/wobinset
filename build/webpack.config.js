@@ -7,7 +7,6 @@ const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const CopyWebpackPlugin = require('copy-webpack-plugin');
-const { AngularCompilerPlugin } = require('@ngtools/webpack');
 
 const config = require('./config');
 
@@ -126,12 +125,6 @@ let webpackConfig = {
     new CleanWebpackPlugin([config.paths.dist], {
       root: config.paths.root,
       verbose: false,
-    }),
-    new AngularCompilerPlugin({
-      tsConfigPath: join(config.paths.root, 'app'),
-      entryModule: join(config.paths.root, 'app/app/app.module#AppModule'),
-      sourceMap: true,
-      skipCodeGeneration: true,
     }),
     // Copy images from the assets folder to dist folder.
     // new CopyWebpackPlugin(
