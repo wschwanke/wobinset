@@ -32,7 +32,7 @@ module.exports = {
     compress: true,
     public: 'http://0.0.0.0:3001',
     proxy: {
-      '*': 'http://proxy:3000',
+      '*': 'http://0.0.0.0:3000',
     },
   },
 };

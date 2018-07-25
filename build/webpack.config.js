@@ -6,6 +6,7 @@ const merge = require('webpack-merge');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { AngularCompilerPlugin } = require('@ngtools/webpack');
 // const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const config = require('./config');
@@ -17,8 +18,8 @@ let webpackConfig = {
 
   entry: {
     bundle: [
-      join(config.paths.root, 'app/main.ts'),
-      join(config.paths.root, 'app/polyfills.ts'),
+      join(config.paths.root, 'client/main.ts'),
+      join(config.paths.root, 'client/polyfills.ts'),
     ],
   },
 
@@ -41,22 +42,19 @@ let webpackConfig = {
     rules: [
       {
         test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
-        loader: '@ngtools/webpack'
-      },
-      {
-        "test": /\.html$/,
-        "loader": "raw-loader"
+        loader: '@ngtools/webpack',
       },
       {
         test: /\.css?$/,
         exclude: /node_modules/,
         use: [
+          { loader: 'to-string-loader' },
           config.enabled.watcher ? 'style-loader' : MiniCssExtractPlugin.loader,
           { loader: 'css-loader', options: { sourceMap: config.enabled.sourceMaps } },
           {
             loader: 'postcss-loader',
             options: {
-              config: { path: join(__dirname, '/webpack'), ctx: config },
+              config: { path: join(config.paths.root, 'build'), ctx: config },
               sourceMap: config.enabled.sourceMaps,
             },
           },
@@ -66,12 +64,13 @@ let webpackConfig = {
         test: /\.scss?$/,
         exclude: /node_modules/,
         use: [
+          { loader: 'to-string-loader' },
           config.enabled.watcher ? 'style-loader' : MiniCssExtractPlugin.loader,
           { loader: 'css-loader', options: { sourceMap: config.enabled.sourceMaps } },
           {
             loader: 'postcss-loader',
             options: {
-              config: { path: join(__dirname, '/webpack'), ctx: config },
+              config: { path: join(config.paths.root, 'build'), ctx: config },
               sourceMap: config.enabled.sourceMaps,
             },
           },
@@ -85,6 +84,10 @@ let webpackConfig = {
             },
           },
         ],
+      },
+      {
+        test: /\.html$/,
+        loader: 'html-loader'
       },
     ],
   },
@@ -141,8 +144,15 @@ let webpackConfig = {
     //   },
     // ),
     new MiniCssExtractPlugin({
-      filename: config.enabled.watcher ? 'styles/[name].css' : 'styles/[name].[hash].css',
-      chunkFilename: config.enabled.watcher ? 'styles/[id].css' : 'styles/[id].[hash].css',
+      filename: !config.enabled.production ? 'styles/[name].css' : 'styles/[name].[hash].css',
+      chunkFilename: !config.enabled.production ? 'styles/[name].css' : 'styles/[name].[hash].css',
+    }),
+    new AngularCompilerPlugin({
+      platform: 0,
+      entryModule: join(config.paths.root, 'client/app/app.module'),
+      sourceMap: true,
+      tsConfigPath: join(config.paths.root, 'client/tsconfig.app.json'),
+      skipCodeGeneration: true,
     }),
     new FriendlyErrorsWebpackPlugin(),
   ],
